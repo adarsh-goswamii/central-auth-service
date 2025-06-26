@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+starlette
+sqlalchemy
+alembic
+pydantic_settings
+psycopg2-binary
+uuid
+jinja2
