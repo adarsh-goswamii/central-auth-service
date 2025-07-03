@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Central Auth</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0px;
+        padding: 0px;
+        box-sizing: inherit;
+      }
+
+      /* 1 rem will be equal to the font size mentioned in html */
+      html {
+        font-size: 14px;
+      }
+
+      body {
+        box-sizing: border-box;
+        font-family: Poppins, Arial, Helvetica, sans-serif; /* just inject font into html head */
+        font-weight: 400;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background-color: var(--background-color);
+        color: #cfcfcf;
+      }
+
+      .page-container {
+        background: url(/static/bg.png);
+        height: 100%;
+        width: 100%;
+        background-position: bottom;
+        background-size: cover;
+        background-repeat: no-repeat;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .form-container {
+        width: 40vw;
+        height: fit-content;
+        padding: 16px;
+        border-radius: 8px;
+        background-color: #161a1d;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      h6 {
+        font-size: 1.5rem;
+        font-weight: 500;
+        text-align: center;
+      }
+
+      input {
+        padding: 6px 0px;
+        font-size: 1rem;
+        background: transparent;
+        border: none;
+        outline: none;
+        border-bottom: 1px solid #cfcfcf;
+        color: #fff;
+      }
+
+      button {
+        background: #0b090a;
+        border: none;
+        outline: none;
+        padding: 8px 64px;
+        width: fit-content;
+        color: #cfcfcf;
+        border-radius: 3px;
+        align-self: center;
+        margin-top: 12px;
+      }
+      .flex {
+        display: flex;
+      }
+      .flex-column {
+        flex-direction: column;
+      }
+      .text-center {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+  <main class="page-container">
+    {% block content %}
+    <!-- Specific content will go here -->
+    {% endblock %}
+  </main>
+  </body>
+</html>

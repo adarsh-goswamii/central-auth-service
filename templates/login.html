@@ -1,11 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-</head>
-<body>
-<h1>This is a login page</h1>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+
+  <section class="form-container">
+    <form id="login-form">
+      <h6>Welcome</h6>
+      <input type="email" id="email" placeholder="Enter your email" required />
+
+      <input
+        type="password"
+        id="password"
+        placeholder="Enter your password"
+        required
+      />
+
+      <button type="submit">Login</button>
+    </form>
+  </section>
+
+<script>
+  document
+    .getElementById("login-form")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault(); // prevent the form from reloading the page
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const applicationId = urlParams.get("application_id");
+      const redirectUri = urlParams.get("redirect_uri");
+
+      try {
+        const response = await fetch("/v1/oauth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const result = await response.json();
+        console.log("Login success:", result);
+
+        const auth_code = result?.authorization_code;
+        const finalUrl = new URL(redirectUri);
+        finalUrl.searchParams.set("auth_code", auth_code);
+
+        window.location.href = finalUrl.toString();
+      } catch (error) {
+        console.error("Login failed:", error);
+        alert("Something went wrong. Please try again.");
+      }
+    });
+</script>
+{% endblock %}

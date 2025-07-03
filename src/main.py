@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.staticfiles import StaticFiles
 
 from src.configs.env import get_settings
 from src.routes.v1 import main as v1_routes
@@ -27,6 +28,7 @@ async def shutdown_event():
     # do something
     print("Server stopped")
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
