@@ -22,21 +22,10 @@ templates = Jinja2Templates(directory="templates")
 
 class AuthController:
     @staticmethod
-    def render_login_page(request: Request, application_id: str, redirect_uri: str):
-        session_id = request.cookies.get("session_id")
+    def render_login_page(request: Request, payload: tuple[ApplicationModel, str]):
+        application, redirect_uri = payload
         db = get_db()
-
-        query = db.query(ApplicationModel).filter(ApplicationModel.application_id == application_id)
-        application: Optional[ApplicationModel] = select_first(query)
-        if not application or application.status != ApplicationStatus.ACTIVE:
-            return templates.TemplateResponse("invalid_app.html", {
-                "request": request,
-                "application_id": application_id,
-                "redirect_uri": redirect_uri
-            })
-
-        if url.strip_query_params(redirect_uri) not in application.redirect_uris:
-            raise HTTPException(status_code=400, detail="Invalid redirect uri")
+        session_id = request.cookies.get("session_id")
 
         if session_id:
             query = db.query(SessionModel).filter(SessionModel.id == session_id)
@@ -46,7 +35,7 @@ class AuthController:
                 save_new_row(AuthCodeModel(
                     code=auth_code,
                     user_id=session.user_id,
-                    application_id=application_id,
+                    application_id=application.application_id,
                     expires_at=datetime.utcnow() + timedelta(minutes=5)
                 ))
 
@@ -54,13 +43,14 @@ class AuthController:
 
         return templates.TemplateResponse("login.html", {
             "request": request,
-            "application_id": application_id,
+            "application_id": application.application_id,
             "redirect_uri": redirect_uri
         })
 
     @staticmethod
-    def login_user(request: Request, payload: LoginUserInbound):
+    def login_user(request: Request, payload: LoginUserInbound, app_payload: tuple[ApplicationModel, str]):
         db = get_db()
+        application, _ = app_payload
         query = db.query(UserModel).filter(UserModel.email == payload.email)
         existing_user: Optional[UserModel] = select_first(query)
 
@@ -80,19 +70,26 @@ class AuthController:
             ip=request.client.host
         )
         session: SessionModel = save_new_row(new_session)
+
         auth_code = str(uuid4())
+        save_new_row(AuthCodeModel(
+            code=auth_code,
+            user_id=session.user_id,
+            application_id=application.application_id,
+            expires_at=datetime.utcnow() + timedelta(minutes=5)
+        ))
+
         response = JSONResponse(status_code=200, content={
             "message": "Login successful",
             "authorization_code": auth_code
         })
-
         response.set_cookie(key="session_id", value=session.id, httponly=True, max_age=60 * 60 * 4)
         return response
 
     @staticmethod
-    def register_user(request: Request, payload: RegisterUserInbound):
+    def register_user(request: Request, payload: RegisterUserInbound, app_payload: tuple[ApplicationModel, str]):
         db = get_db()
-
+        application, _ = app_payload
         user_query = db.query(UserModel).filter(UserModel.email == payload.email)
         existing_user:  Optional[UserModel] = select_first(user_query)
 
@@ -119,12 +116,18 @@ class AuthController:
             ip=request.client.host
         )
         session: SessionModel = save_new_row(new_session)
+
         auth_code = str(uuid4())
+        save_new_row(AuthCodeModel(
+            code=auth_code,
+            user_id=session.user_id,
+            application_id=application.application_id,
+            expires_at=datetime.utcnow() + timedelta(minutes=5)
+        ))
 
         response = JSONResponse(status_code=200, content={
             "message": "User Registered Successfully",
             "authorization_code": auth_code
         })
-
         response.set_cookie(key="session_id", value=session.id, httponly=True, max_age=60 * 60 * 4)
         return response

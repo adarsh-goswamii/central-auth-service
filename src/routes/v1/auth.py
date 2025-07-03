@@ -1,18 +1,23 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 
+from src.dependency.valid_app import validate_application_query
+from src.schema.schema import ApplicationModel
 from src.services.auth.serializer import LoginUserInbound, RegisterUserInbound
 from src.services.auth.controller import AuthController
 
 router = APIRouter()
 
+
 @router.get("/login")
-async def get_login_page(request: Request, application_id: str, redirect_uri: str):
-    return AuthController.render_login_page(request, application_id, redirect_uri)
+async def get_login_page(request: Request, payload: tuple[ApplicationModel, str] = Depends(validate_application_query)):
+    return AuthController.render_login_page(request, payload)
+
 
 @router.post("/login")
-async def authenticate_user(request: Request, payload: LoginUserInbound):
-    return AuthController.login_user(request, payload)
+async def authenticate_user(request: Request, payload: LoginUserInbound, app_payload: tuple[ApplicationModel, str] = Depends(validate_application_query)):
+    return AuthController.login_user(request, payload, app_payload)
+
 
 @router.post("/register")
-async def  register_user(request: Request, payload: RegisterUserInbound):
-    return AuthController.register_user(request, payload)
+async def register_user(request: Request, payload: RegisterUserInbound, app_payload: tuple[ApplicationModel, str] = Depends(validate_application_query)):
+    return AuthController.register_user(request, payload, app_payload)
