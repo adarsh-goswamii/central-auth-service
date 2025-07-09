@@ -8,3 +8,4 @@ psycopg2-binary
 uuid
 jinja2
 bcrypt
+pyjwt

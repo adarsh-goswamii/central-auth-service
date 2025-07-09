@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BIGINT, Column, DateTime, VARCHAR, ARRAY, Enum
+from sqlalchemy import BIGINT, Column, DateTime, VARCHAR, ARRAY, Enum, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 from src.configs.enums import ApplicationStatus
@@ -38,6 +38,9 @@ class ApplicationModel(Base):
     application_secret  = Column(VARCHAR(512), nullable=False)
     redirect_uris       = Column(ARRAY(VARCHAR), default=[])
     status              = Column(Enum(ApplicationStatus), default=ApplicationStatus.ACTIVE)
+
+    private_key = Column(Text, nullable=True)  # PEM format (RSA private key)
+    public_key = Column(Text, nullable=True)  # PEM format (RSA public key)
 
 class AuthCodeModel(Base):
     __tablename__ = DBTables.AUTH_CODES

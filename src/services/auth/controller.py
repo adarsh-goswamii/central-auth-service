@@ -8,6 +8,7 @@ from starlette.templating import Jinja2Templates
 
 from src.lib.bcrypt import hasher
 from src.lib.db_session import get_db, select_first, save_new_row
+from src.lib.jwt import jwt_manager
 from src.schema.schema import UserModel
 from src.services.auth.serializer import LoginUserInbound, RegisterUserInbound
 from src.configs.enums import ApplicationStatus
@@ -131,3 +132,59 @@ class AuthController:
         })
         response.set_cookie(key="session_id", value=session.id, httponly=True, max_age=60 * 60 * 4)
         return response
+
+    @staticmethod
+    def get_user_tokens(request: Request, auth_code: str, authorization: str):
+        if not authorization:
+            raise HTTPException(
+                status_code=401,
+                detail="Authorization header missing"
+            )
+
+        if not authorization.startswith("Basic "):
+            raise HTTPException(status_code=400, detail="Invalid authorization scheme. Expected 'Basic'.")
+
+        try:
+            encoded_credentials = authorization.split(" ")[1]
+            decoded_bytes = base64.b64decode(encoded_credentials)
+            decoded_str = decoded_bytes.decode("utf-8")
+            application_id, application_secret = decoded_str.split(":", 1)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Malformed authorization header. Base64 decoding failed.")
+
+        if not application_id or not application_secret:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid authorization scheme."
+            )
+
+        db = get_db()
+        query = db.query(ApplicationModel).filter(ApplicationModel.application_id == application_id, ApplicationModel.application_secret == application_secret)
+        app: Optional[ApplicationModel] = select_first(query)
+
+        if not app:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid credentials"
+            )
+
+        query = db.query(AuthCodeModel).filter(AuthCodeModel.code == auth_code)
+        auth_code: Optional[AuthCodeModel] = select_first(query)
+
+        if not auth_code or auth_code.expires_at < datetime.utcnow() or auth_code.application_id != application_id:
+            raise HTTPException(
+                status_code=401,
+                detail="Auth Code expired or wrong."
+            )
+
+        query = db.query(UserModel).filter(UserModel.id == auth_code.user_id)
+        user: Optional[UserModel] = select_first(query)
+
+        jwt_token = jwt_manager.generate_token(app.private_key, {
+            "id": user.id,
+            "email": user.email
+        }, 4 * 60 * 60)
+
+        return JSONResponse(status_code=200, content={
+            "token": jwt_token
+        })
